@@ -1,0 +1,1 @@
+exports.serviceHandler = require('./serviceHandler');

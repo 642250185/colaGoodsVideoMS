@@ -19,7 +19,7 @@
     "dependencies": {
         "js-sleep": "^1.0.0",
         "lodash": "^4.17.11",
-        "mongoose": "^5.3.16",
+        "mongoose": "^5.4.0",
         "sleep": "^5.2.3"
     }
 }
