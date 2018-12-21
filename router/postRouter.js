@@ -2,7 +2,7 @@ const {getAll} = require('../service/postService');
 const pagination = require('../model/pagination');
 const postRouter = class postRouter {
     async getAll(ctx, next) {
-        let {index, size, q, status, orderBy, order, channel, account} = ctx.request.query;
+        let {index, size, q, status, orderBy, order, channel, nickname} = ctx.request.query;
         let page = new pagination({index, size, orderBy, order});
         let query = {};
         if(q){
@@ -18,8 +18,8 @@ const postRouter = class postRouter {
         if(channel){
             query.channel = channel;
         }
-        if(account){
-            query.account = account;
+        if(nickname){
+            query.nickname = nickname;
         }
         page.q = query;
         console.info(`2 > page: `, page);
