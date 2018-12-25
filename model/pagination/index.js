@@ -1,7 +1,6 @@
 module.exports = class Pageination {
 
     constructor(params) {
-        console.info('params: ', params);
         if(!params) {
             params = {};
         }
