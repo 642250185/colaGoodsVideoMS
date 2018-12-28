@@ -17,9 +17,11 @@
         "gulp-less": "^3.0.0"
     },
     "dependencies": {
+        "@koa/cors": "^2.2.3",
         "fs-extra": "^7.0.1",
         "js-sleep": "^1.0.0",
         "koa": "^2.6.2",
+        "koa-body": "^4.0.6",
         "koa-router": "^7.4.0",
         "lodash": "^4.17.11",
         "moment": "^2.23.0",

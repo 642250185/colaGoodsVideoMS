@@ -6,6 +6,9 @@ const postRouter = require('./postRouter');
 router.get('/post', postRouter.getAll);
 router.get('/statistics', postRouter.getStatisticsPost);
 router.get('/option', postRouter.getChannelAndNickname);
-router.get('/export', postRouter.exportPost);
+router.post('/export', postRouter.exportPost);
+router.post('/statisticsExport', postRouter.exportStatisticsPost);
+router.get('/export', postRouter.downloadItemFile);
+
 
 module.exports = router;

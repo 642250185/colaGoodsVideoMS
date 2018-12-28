@@ -36,6 +36,23 @@ const array = [
     },
     {
         "status": false,
+        "_id": "5c235bc1b49278c647b484ff",
+        "channel": "budejie",
+        "nickname": "南山无颜祖3",
+        "postId": "29010395",
+        "title": "2099元的银色iPhone7开箱，上手那一刻，这应该是目前最便宜的吧",
+        "playCount": 930,
+        "collectCount": 0,
+        "shareCount": 0,
+        "commentCount": 1,
+        "likeCount": 61,
+        "recommendCount": 0,
+        "dateTime": "2018-12-15T12:15:24.000Z",
+        "createTime": "2018-12-26T10:45:21.940Z",
+        "updateTime": "2018-12-26T10:45:21.940Z"
+    },
+    {
+        "status": false,
         "_id": "5c235b69b49278c647b484ef",
         "channel": "tikTok",
         "nickname": "皮卡丘开箱v",
@@ -84,6 +101,74 @@ const array = [
         "dateTime": "2018-12-13T11:27:05.000Z",
         "createTime": "2018-12-26T10:43:53.077Z",
         "updateTime": "2018-12-26T10:43:53.077Z"
+    },
+    {
+        "status": false,
+        "_id": "5c235b69b49278c647b484ed",
+        "channel": "tikTok",
+        "nickname": "皮卡丘开箱v2",
+        "postId": "6634437808935144707",
+        "title": "iPhone x，如今4799？小哥哥能不能给我一个？#手机 #苹果手机",
+        "playCount": 0,
+        "collectCount": 0,
+        "shareCount": 0,
+        "commentCount": 37,
+        "likeCount": 652,
+        "recommendCount": 0,
+        "dateTime": "2018-12-13T11:27:05.000Z",
+        "createTime": "2018-12-26T10:43:53.077Z",
+        "updateTime": "2018-12-26T10:43:53.077Z"
+    },
+    {
+        "status": false,
+        "_id": "5c235b69b49278c647b484ed",
+        "channel": "bilibili",
+        "nickname": "皮卡丘开箱v2",
+        "postId": "6634437808935144707",
+        "title": "iPhone x，如今4799？小哥哥能不能给我一个？#手机 #苹果手机",
+        "playCount": 0,
+        "collectCount": 0,
+        "shareCount": 0,
+        "commentCount": 37,
+        "likeCount": 652,
+        "recommendCount": 0,
+        "dateTime": "2018-12-13T11:27:05.000Z",
+        "createTime": "2018-12-26T10:43:53.077Z",
+        "updateTime": "2018-12-26T10:43:53.077Z"
+    },
+    {
+        "status": false,
+        "_id": "5c235b69b49278c647b484ed",
+        "channel": "bilibili",
+        "nickname": "皮卡丘开箱v",
+        "postId": "6634437808935144707",
+        "title": "iPhone x，如今4799？小哥哥能不能给我一个？#手机 #苹果手机",
+        "playCount": 0,
+        "collectCount": 0,
+        "shareCount": 0,
+        "commentCount": 37,
+        "likeCount": 652,
+        "recommendCount": 0,
+        "dateTime": "2018-12-13T11:27:05.000Z",
+        "createTime": "2018-12-26T10:43:53.077Z",
+        "updateTime": "2018-12-26T10:43:53.077Z"
+    },
+    {
+        "status": false,
+        "_id": "5c235b69b49278c647b484ed",
+        "channel": "sohu",
+        "nickname": "皮卡丘开箱v1",
+        "postId": "6634437808935144707",
+        "title": "iPhone x，如今4799？小哥哥能不能给我一个？#手机 #苹果手机",
+        "playCount": 0,
+        "collectCount": 0,
+        "shareCount": 0,
+        "commentCount": 37,
+        "likeCount": 652,
+        "recommendCount": 0,
+        "dateTime": "2018-12-13T11:27:05.000Z",
+        "createTime": "2018-12-26T10:43:53.077Z",
+        "updateTime": "2018-12-26T10:43:53.077Z"
     }
 ];
 
@@ -98,9 +183,7 @@ const statistics = async(array) => {
                 item.titleNumber = 1;
                 map.set(item.channel, item);
             } else {
-                if(post.nickname !== item.nickname){
-                    post.titleNumber++;
-                }
+                post.titleNumber++;
                 post.playCount      += item.playCount;
                 post.collectCount   += item.collectCount;
                 post.shareCount     += item.shareCount;
@@ -131,4 +214,20 @@ const statistics = async(array) => {
 };
 
 
-statistics(array);
+const getTotalStatistics = async() => {
+    try {
+        const items = await statistics(array);
+        let totalPlayCount = 0, totalTitleNumber = 0;
+        for(const post of items){
+            totalPlayCount = totalPlayCount + post.playCount;
+            totalTitleNumber = totalTitleNumber + post.titleNumber;
+        }
+        return {totalPlayCount, totalTitleNumber}
+    } catch (e) {
+        console.error(e);
+        return e;
+    }
+};
+
+
+getTotalStatistics();

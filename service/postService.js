@@ -4,8 +4,13 @@ const config = require('../config/cfg');
 const xlsx = require('node-xlsx').default;
 
 const {DOWNLOAD_PATH} = config;
+const {postSheet, statisticsPostSheet} = config.Sheet;
 
-
+/**
+ * 筛选平台和昵称
+ * @param items 所有帖子集合
+ * @returns {Promise<*>}
+ */
 const filterChannelAndNickname = async(items) => {
     try {
         const channels = [];
@@ -35,6 +40,82 @@ const filterChannelAndNickname = async(items) => {
     }
 };
 
+/**
+ * 全局导出命名
+ * @param sheet
+ * @returns {string}
+ * @private
+ */
+const _generateFileName = (sheet) => {
+    const timeStr = `${moment().format('YYYY-MM-DD-HH-mm-ss')}.xlsx`;
+    return `${sheet}-${timeStr}`;
+};
+
+/**
+ * 统计帖子的各个数值的总和
+ * @param array 帖子结果集
+ * @returns {Promise<Array>}
+ */
+const statistics = async(array) => {
+    try {
+        const posts = [];
+        const map = new Map();
+        for(const item of array){
+            let post = map.get(item.channel);
+            if(!post){
+                item.titleNumber = 1;
+                map.set(item.channel, item);
+            } else {
+                post.titleNumber++;
+                post.playCount      += item.playCount;
+                post.collectCount   += item.collectCount;
+                post.shareCount     += item.shareCount;
+                post.commentCount   += item.commentCount;
+                post.likeCount      += item.likeCount;
+                post.recommendCount += item.recommendCount;
+            }
+        }
+        for(const [key, value] of map.entries()){
+            posts.push({
+                channel         : value.channel,
+                titleNumber     : value.titleNumber,
+                playCount       : value.playCount,
+                collectCount    : value.collectCount,
+                shareCount      : value.shareCount,
+                commentCount    : value.commentCount,
+                likeCount       : value.likeCount,
+                recommendCount  : value.recommendCount,
+                fansCount       : 0,
+            });
+        }
+        return posts;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+/**
+ * 统计总的播放量和总的标题数量
+ * @param items 已经统计的帖子各个数值的总和
+ * @returns {Promise<*>}
+ */
+const getTotalStatistics = async(items) => {
+    try {
+        let totalPlayCount = 0, totalTitleNumber = 0;
+        for(const post of items){
+            totalPlayCount = totalPlayCount + post.playCount;
+            totalTitleNumber = totalTitleNumber + post.titleNumber;
+        }
+        return {totalPlayCount, totalTitleNumber}
+    } catch (e) {
+        console.error(e);
+        return e;
+    }
+};
+
+
+// ============================ 分割线 ===========================//
 
 const getAll = async (page) => {
     try {
@@ -101,53 +182,6 @@ const getChannelAndNickname = async(page) => {
 };
 
 
-const _generateFileName = () => {
-    return `item-${moment().format('YYYY-MM-DD-HH-mm-ss')}.xlsx`;
-};
-
-
-const statistics = async(array) => {
-    try {
-        const posts = [];
-        const map = new Map();
-        for(const item of array){
-            let post = map.get(item.channel);
-            if(!post){
-                item.titleNumber = 1;
-                map.set(item.channel, item);
-            } else {
-                if(post.nickname !== item.nickname){
-                    post.titleNumber++;
-                }
-                post.playCount      += item.playCount;
-                post.collectCount   += item.collectCount;
-                post.shareCount     += item.shareCount;
-                post.commentCount   += item.commentCount;
-                post.likeCount      += item.likeCount;
-                post.recommendCount += item.recommendCount;
-            }
-        }
-        for(const [key, value] of map.entries()){
-            posts.push({
-                channel         : value.channel,
-                titleNumber     : value.titleNumber,
-                playCount       : value.playCount,
-                collectCount    : value.collectCount,
-                shareCount      : value.shareCount,
-                commentCount    : value.commentCount,
-                likeCount       : value.likeCount,
-                recommendCount  : value.recommendCount,
-                fansCount       : 0,
-            });
-        }
-        return posts;
-    } catch (e) {
-        console.error(e);
-        return [];
-    }
-};
-
-
 const exportPost = async(args) => {
     try {
         let posts = await $post.find(args);
@@ -169,7 +203,7 @@ const exportPost = async(args) => {
             row.push(post.dateTime);
             postTable.push(row);
         }
-        const fileName = _generateFileName();
+        const fileName = _generateFileName(postSheet);
         const fileDir = `${DOWNLOAD_PATH}/${fileName}`;
         await fs.ensureDir(DOWNLOAD_PATH);
         fs.writeFileSync(fileDir, xlsx.build([{name: "分表数据",data: postTable}]));
@@ -181,7 +215,41 @@ const exportPost = async(args) => {
 };
 
 
+const exportStatisticsPost = async(args) => {
+    try {
+        let posts = await $post.find(args);
+        posts = await statistics(posts);
+        console.info('导出的数据量: ', posts.length, posts);
+        const postTable = [];
+        const header = ['平台','标题数','播放量','收藏数','转发数','评论数','点赞数','推荐数','粉丝数'];
+        postTable.push(header);
+        for(const post of posts){
+            const row = [];
+            row.push(post.channel);
+            row.push(post.titleNumber);
+            row.push(post.playCount);
+            row.push(post.collectCount);
+            row.push(post.shareCount);
+            row.push(post.commentCount);
+            row.push(post.likeCount);
+            row.push(post.recommendCount);
+            row.push(post.fansCount);
+            postTable.push(row);
+        }
+        const fileName = _generateFileName(statisticsPostSheet);
+        const fileDir = `${DOWNLOAD_PATH}/${fileName}`;
+        await fs.ensureDir(DOWNLOAD_PATH);
+        fs.writeFileSync(fileDir, xlsx.build([{name: "总表表数据",data: postTable}]));
+        return {err: null, fileName};
+    } catch (e) {
+        console.error(e);
+        return {err: '导出数据失败, 请联系管理员'};
+    }
+};
+
+
 exports.getAll = getAll;
 exports.exportPost = exportPost;
 exports.getStatisticsPost = getStatisticsPost;
+exports.exportStatisticsPost = exportStatisticsPost;
 exports.getChannelAndNickname = getChannelAndNickname;
