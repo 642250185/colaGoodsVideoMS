@@ -131,6 +131,7 @@ const getAll = async (page) => {
         query.skip(page.skip);
         query.sort(page.sort);
         const items = await query.exec();
+
         page.items = items;
         return page.getResult();
     } catch (e) {
@@ -149,9 +150,9 @@ const getStatisticsPost = async (page) => {
             page.items = [];
             return page.getResult();
         }
-        page.total = total;
         let items = await query.exec();
         items = await statistics(items);
+        page.total = items.length;
         page.items = items;
         return page.getResult();
     } catch (e) {
@@ -161,23 +162,20 @@ const getStatisticsPost = async (page) => {
 };
 
 
-const getChannelAndNickname = async(page) => {
+const getChannelAndNickname = async() => {
     try {
-        let query = $post.find(page.q);
-        let countQuery = $post.countDocuments(page.q);
+        let query = $post.find();
+        let countQuery = $post.countDocuments();
         const total = await countQuery.exec();
         if(total === 0){
-            page.items = [];
-            return page.getResult();
+            return {err: null, message: "没有数据"};
         }
-        page.total = total;
         let items = await query.exec();
         items = await filterChannelAndNickname(items);
-        page.items = items;
-        return page.getResult();
+        return {err: null, items};
     } catch (e) {
         console.error(e);
-        return page.getResult();
+        return {err: e, message: "没有数据"};
     }
 };
 
@@ -185,7 +183,7 @@ const getChannelAndNickname = async(page) => {
 const exportPost = async(args) => {
     try {
         let posts = await $post.find(args);
-        console.info('导出的数据量: ', posts.length);
+        console.info('分表导出的数据量: ', posts.length);
         const postTable = [];
         const header = ['平台','账号','标题','播放量','收藏数','转发数','评论数','点赞数','推荐数','时间'];
         postTable.push(header);
@@ -219,7 +217,7 @@ const exportStatisticsPost = async(args) => {
     try {
         let posts = await $post.find(args);
         posts = await statistics(posts);
-        console.info('导出的数据量: ', posts.length, posts);
+        console.info('总表导出的数据量: ', posts.length);
         const postTable = [];
         const header = ['平台','标题数','播放量','收藏数','转发数','评论数','点赞数','推荐数','粉丝数'];
         postTable.push(header);

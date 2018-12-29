@@ -3,10 +3,11 @@ const Koa = require('koa');
 const app = new Koa();
 const cors = require('@koa/cors');
 const koaBody = require('koa-body');
-
+const koaLogger = require('koa-logger');
 
 const router = require('./router');
 
+app.use(koaLogger());
 app.use(cors({
     origin: '*'
 }));

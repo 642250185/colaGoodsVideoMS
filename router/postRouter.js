@@ -57,8 +57,7 @@ const postRouter = class postRouter {
     }
 
     async getChannelAndNickname(ctx, next) {
-        let page = new pagination();
-        ctx.body = await getChannelAndNickname(page);
+        ctx.body = await getChannelAndNickname();
         await next();
     }
 

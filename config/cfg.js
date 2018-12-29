@@ -7,8 +7,8 @@ const config = {
         dbname: 'colaGoods'
     },
     Sheet:{
-        postSheet: "分表",
-        statisticsPostSheet: "总表"
+        postSheet: "post",
+        statisticsPostSheet: "totalPost"
     },
     DOWNLOAD_PATH: path.join(__dirname, '..','download'),
     env: function () {
