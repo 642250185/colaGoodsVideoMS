@@ -1,1 +1,1 @@
-exports.serviceHandler = require('./serviceHandler');
+exports.responseHandle = require('./response');

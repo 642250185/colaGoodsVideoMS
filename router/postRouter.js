@@ -34,6 +34,7 @@ const postRouter = class postRouter {
             ];
         }
         page.q = query;
+        console.info('page.q: ', page.q);
         ctx.body = await getAll(page);
         await next();
     }
