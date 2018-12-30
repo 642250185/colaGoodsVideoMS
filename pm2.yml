@@ -1,0 +1,11 @@
+apps:
+  - script: app.js
+    name: colaGoodsVideoMS
+    watch: true
+    ignore_watch:
+      - 'node_modules'
+      -  'logs'
+      -  '.git'
+      - '.idea'
+    out_file: logs/catalina.log
+    error_file: logs/err.log
