@@ -1,7 +1,9 @@
 const fs = require('fs-extra');
 const config = require('../config/cfg');
+
+const {postService} = require('../service');
+
 const pagination = require('../model/pagination');
-const {getAll, exportPost, getStatisticsPost, exportStatisticsPost, getChannelAndNickname} = require('../service/postService');
 
 const {DOWNLOAD_PATH} = config;
 
@@ -34,8 +36,7 @@ const postRouter = class postRouter {
             ];
         }
         page.q = query;
-        console.info('page.q: ', page.q);
-        ctx.body = await getAll(page);
+        ctx.body = await postService.getAll(page);
         await next();
     }
 
@@ -53,12 +54,12 @@ const postRouter = class postRouter {
             ];
         }
         page.q = query;
-        ctx.body = await getStatisticsPost(page);
+        ctx.body = await postService.getStatisticsPost(page);
         await next();
     }
 
     async getChannelAndNickname(ctx, next) {
-        ctx.body = await getChannelAndNickname();
+        ctx.body = await postService.getChannelAndNickname();
         await next();
     }
 
@@ -87,7 +88,7 @@ const postRouter = class postRouter {
                 {"dateTime": {$lte: new Date(endDate)}}
             ];
         }
-        ctx.body = await exportPost(query);
+        ctx.body = await postService.exportPost(query);
         await next();
     }
 
@@ -103,7 +104,7 @@ const postRouter = class postRouter {
                 {"dateTime": {$lte: new Date(endDate)}}
             ];
         }
-        ctx.body = await exportStatisticsPost(query);
+        ctx.body = await postService.exportStatisticsPost(query);
         await next();
     }
 

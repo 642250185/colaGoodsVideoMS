@@ -73,6 +73,7 @@ const statistics = async(array) => {
                 post.commentCount   += item.commentCount;
                 post.likeCount      += item.likeCount;
                 post.recommendCount += item.recommendCount;
+                post.fansCount      += item.fansCount;
             }
         }
         for(const [key, value] of map.entries()){
@@ -85,7 +86,7 @@ const statistics = async(array) => {
                 commentCount    : value.commentCount,
                 likeCount       : value.likeCount,
                 recommendCount  : value.recommendCount,
-                fansCount       : 0,
+                fansCount       : value.fansCount,
             });
         }
         return posts;
