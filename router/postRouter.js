@@ -92,7 +92,7 @@ const postRouter = class postRouter {
         await next();
     }
 
-    async exportStatisticsPost(ctx, next){
+    async exportPostForStatistics(ctx, next){
         let {channel, beginDate, endDate} = ctx.request.body;
         let query = {};
         if(channel){
@@ -104,7 +104,7 @@ const postRouter = class postRouter {
                 {"dateTime": {$lte: new Date(endDate)}}
             ];
         }
-        ctx.body = await postService.exportStatisticsPost(query);
+        ctx.body = await postService.exportPostForStatistics(query);
         await next();
     }
 
@@ -142,10 +142,10 @@ exports.downloadItemFile = async (ctx, next) => {
     return new postRouter().downloadItemFile(ctx, next);
 };
 
-exports.exportStatisticsPost = async (ctx, next) => {
-    return new postRouter().exportStatisticsPost(ctx, next);
-};
-
 exports.getChannelAndNickname = async (ctx, next) => {
     return new postRouter().getChannelAndNickname(ctx, next);
+};
+
+exports.exportPostForStatistics = async (ctx, next) => {
+    return new postRouter().exportPostForStatistics(ctx, next);
 };

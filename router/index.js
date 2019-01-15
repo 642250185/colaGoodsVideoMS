@@ -7,7 +7,7 @@ router.get('/post', postRouter.getAll);
 router.get('/statistics', postRouter.getStatisticsPost);
 router.get('/option', postRouter.getChannelAndNickname);
 router.post('/export', postRouter.exportPost);
-router.post('/statisticsExport', postRouter.exportStatisticsPost);
+router.post('/statisticsExport', postRouter.exportPostForStatistics);
 router.get('/export', postRouter.downloadItemFile);
 
 

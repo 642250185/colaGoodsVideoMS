@@ -58,8 +58,11 @@ const _generateFileName = (sheet) => {
  */
 const statistics = async(array) => {
     try {
+        let totalFansCount = {};
         const posts = [];
         const map = new Map();
+        const channelNicknameMap = new Map();
+        console.info('array: ', array);
         for(const item of array){
             let post = map.get(item.channel);
             if(!post){
@@ -73,9 +76,16 @@ const statistics = async(array) => {
                 post.commentCount   += item.commentCount;
                 post.likeCount      += item.likeCount;
                 post.recommendCount += item.recommendCount;
-                post.fansCount      += item.fansCount;
+
+                const _fansCount = channelNicknameMap.get(post.nickname);
+                if(!_fansCount){
+                    channelNicknameMap.set(post.nickname, post.fansCount);
+                }
             }
         }
+
+        console.info('channelNicknameMap', channelNicknameMap.size, channelNicknameMap);
+
         for(const [key, value] of map.entries()){
             posts.push({
                 channel         : value.channel,
@@ -214,7 +224,7 @@ const exportPost = async(args) => {
 };
 
 
-const exportStatisticsPost = async(args) => {
+const exportPostForStatistics = async(args) => {
     try {
         let posts = await $post.find(args);
         posts = await statistics(posts);
@@ -250,5 +260,5 @@ const exportStatisticsPost = async(args) => {
 exports.getAll = getAll;
 exports.exportPost = exportPost;
 exports.getStatisticsPost = getStatisticsPost;
-exports.exportStatisticsPost = exportStatisticsPost;
 exports.getChannelAndNickname = getChannelAndNickname;
+exports.exportPostForStatistics = exportPostForStatistics;
