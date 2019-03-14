@@ -1,17 +1,15 @@
 const fs = require('fs-extra');
 const config = require('../config/cfg');
 
-const {postService} = require('../service');
-
 const pagination = require('../model/pagination');
+const {postService, groupService} = require('../service');
 
 const {DOWNLOAD_PATH} = config;
 
 const postRouter = class postRouter {
 
-    async getAll(ctx, next) {
-        let {index, size, q, status, orderBy, order, channel, nickname, beginDate, endDate} = ctx.request.query;
-        let page = new pagination({index, size, orderBy, order});
+    async getStatisticsPlayCount(ctx, next){
+        let {q, status, channel, nickname, groupValue, min, max, beginDate, endDate} = ctx.request.query;
         let query = {};
         if(q){
             q = decodeURIComponent(q);
@@ -28,6 +26,62 @@ const postRouter = class postRouter {
         }
         if(nickname){
             query.nickname = nickname;
+        }
+        if(groupValue){
+            query.group = groupValue;
+        }
+        if(min && !max){
+            query["$and"] = [
+                {"playCount": {$gte: min}}
+            ]
+        }
+        if(min && max){
+            query["$and"] = [
+                {"playCount": {$gte: min}},
+                {"playCount": {$lte: max}}
+            ]
+        }
+        if(beginDate && endDate){
+            query["$and"] = [
+                {"dateTime": {$gte: new Date(beginDate)}},
+                {"dateTime": {$lte: new Date(endDate)}}
+            ];
+        }
+        ctx.body = await postService.getStatisticsPlayCount(query);
+        await next();
+    }
+
+    async getAll(ctx, next) {
+        let {index, size, q, status, orderBy, order, channel, nickname, groupValue, min, max, beginDate, endDate} = ctx.request.query;
+        let page = new pagination({index, size, orderBy, order});
+        let query = {};
+        if(q){
+            q = decodeURIComponent(q);
+            query['$or'] = [
+                {'title': new RegExp(q, 'i')}
+            ];
+        }
+        if(status){
+            query.status = status;
+        }
+        if(channel){
+            query.channel = channel;
+        }
+        if(nickname){
+            query.nickname = nickname;
+        }
+        if(groupValue){
+            query.group = groupValue;
+        }
+        if(min && !max){
+            query["$and"] = [
+                {"playCount": {$gte: parseInt(min)}}
+            ]
+        }
+        if(min && max){
+            query["$and"] = [
+                {"playCount": {$gte: parseInt(min), $lte: parseInt(max)}}
+            ]
         }
         if(beginDate && endDate){
             query["$and"] = [
@@ -63,13 +117,18 @@ const postRouter = class postRouter {
         await next();
     }
 
+    async getUsernameByChannel(ctx, next) {
+        let {channel} = ctx.request.body;
+        ctx.body = await postService.getUsernameByChannel(channel);
+        await next();
+    }
+
     async exportPost(ctx, next){
-        let {q, status, channel, nickname, beginDate, endDate} = ctx.request.body;
+        let {q, status, channel, nickname, groupValue, min, max, beginDate, endDate} = ctx.request.body;
         let query = {};
         if(q){
             q = decodeURIComponent(q);
             query['$or'] = [
-                {'postId': q},
                 {'title': new RegExp(q, 'i')}
             ];
         }
@@ -82,6 +141,19 @@ const postRouter = class postRouter {
         if(nickname){
             query.nickname = nickname;
         }
+        if(groupValue){
+            query.group = groupValue;
+        }
+        if(min && !max){
+            query["$and"] = [
+                {"playCount": {$gte: parseInt(min)}}
+            ]
+        }
+        if(min && max){
+            query["$and"] = [
+                {"playCount": {$gte: parseInt(min), $lte: parseInt(max)}}
+            ]
+        }
         if(beginDate && endDate){
             query["$and"] = [
                 {"dateTime": {$gte: new Date(beginDate)}},
@@ -89,6 +161,28 @@ const postRouter = class postRouter {
             ];
         }
         ctx.body = await postService.exportPost(query);
+        await next();
+    }
+
+    async getGroupList(ctx, next) {
+        const {channel, nickname, groupValue} = ctx.request.query;
+        let query = {};
+        if(channel){
+            query.channel = channel;
+        }
+        if(nickname){
+            query.nickname = nickname;
+        }
+        if(groupValue){
+            query.group = groupValue;
+        }
+        ctx.body = await postService.getGroupList(query);
+        await next();
+    }
+
+    async updateGroup(ctx, next) {
+        const arr_args = ctx.request.body;
+        ctx.body = await postService.updateGroup(arr_args);
         await next();
     }
 
@@ -123,6 +217,27 @@ const postRouter = class postRouter {
         ctx.set('Content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         await fs.unlinkSync(path);
     }
+
+    async add(ctx, next){
+        let {groupName} = ctx.request.body;
+        ctx.body = await groupService.add(groupName);
+        await next();
+    }
+
+    async del(ctx, next){
+        let {_id} = ctx.request.body;
+        ctx.body = await groupService.del(_id);
+        await next();
+    }
+
+    async list(ctx, next){
+        let {size, orderBy, order} = ctx.request.query;
+        let page = new pagination({size, orderBy, order});
+        let query = {};
+        page.q = query;
+        ctx.body = await groupService.list(page);
+        await next();
+    }
 };
 
 
@@ -134,6 +249,14 @@ exports.exportPost = async (ctx, next) => {
     return new postRouter().exportPost(ctx, next);
 };
 
+exports.updateGroup = async (ctx, next) => {
+    return new postRouter().updateGroup(ctx, next);
+};
+
+exports.getGroupList = async (ctx, next) => {
+    return new postRouter().getGroupList(ctx, next);
+};
+
 exports.getStatisticsPost = async (ctx, next) => {
     return new postRouter().getStatisticsPost(ctx, next);
 };
@@ -142,10 +265,30 @@ exports.downloadItemFile = async (ctx, next) => {
     return new postRouter().downloadItemFile(ctx, next);
 };
 
+exports.getUsernameByChannel = async (ctx, next) => {
+    return new postRouter().getUsernameByChannel(ctx, next);
+};
+
 exports.getChannelAndNickname = async (ctx, next) => {
     return new postRouter().getChannelAndNickname(ctx, next);
 };
 
+exports.getStatisticsPlayCount = async (ctx, next) => {
+    return new postRouter().getStatisticsPlayCount(ctx, next);
+};
+
 exports.exportPostForStatistics = async (ctx, next) => {
     return new postRouter().exportPostForStatistics(ctx, next);
+};
+
+exports.add = async (ctx, next) => {
+    return new postRouter().add(ctx, next);
+};
+
+exports.del = async (ctx, next) => {
+    return new postRouter().del(ctx, next);
+};
+
+exports.list = async (ctx, next) => {
+    return new postRouter().list(ctx, next);
 };

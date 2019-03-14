@@ -12,7 +12,9 @@ global.$mongoose = mongoose;
  */
 const syncDB = () => {
     const {post} = require('../model/post');
+    const {group} = require('../model/group');
     global['$post'] = mongoose.model('post', post, 'post');
+    global['$group'] = mongoose.model('group', group, 'group');
 };
 
 syncDB();

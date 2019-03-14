@@ -1,3 +1,4 @@
+const uuid = require('uuid').v1();
 const _ = require('lodash');
 const array = [
     {
@@ -205,7 +206,6 @@ const statistics = async(array) => {
                 fansCount       : 0,
             });
         }
-        console.info(`posts: `, posts);
         return posts;
     } catch (e) {
         console.error(e);
@@ -230,4 +230,4 @@ const getTotalStatistics = async() => {
 };
 
 
-getTotalStatistics();
+console.info(`uuid: `, uuid);

@@ -42,6 +42,15 @@ exports.post = new Schema({
         type: Boolean,
         default: false,
     },
+    group: {
+        type: Number,
+        default: 0
+    },
+    groupName: String,
+    verifier: {
+        type: Number,
+        default: 0
+    },
     dateTime: {
         type: Date
     },

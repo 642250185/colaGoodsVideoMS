@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const fs = require('fs-extra');
 const moment = require('moment');
 const config = require('../config/cfg');
@@ -62,7 +63,6 @@ const statistics = async(array) => {
         const posts = [];
         const map = new Map();
         const channelNicknameMap = new Map();
-        console.info('array: ', array);
         for(const item of array){
             let post = map.get(item.channel);
             if(!post){
@@ -83,8 +83,6 @@ const statistics = async(array) => {
                 }
             }
         }
-
-        console.info('channelNicknameMap', channelNicknameMap.size, channelNicknameMap);
 
         for(const [key, value] of map.entries()){
             posts.push({
@@ -126,7 +124,92 @@ const getTotalStatistics = async(items) => {
 };
 
 
+const _filterChannel = async(items) => {
+    try {
+        const map = new Map();
+        const channelList = [];
+        for(const item of items){
+            const {postId, channel} = item;
+            const key_channel = map.get(channel);
+            if(!key_channel){
+                map.set(channel, postId);
+            }
+        }
+        for(const [key, value] of map.entries()){
+            channelList.push(key);
+        }
+        return channelList;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+
+const _getGroupName = async(value) => {
+    try {
+        const item = await $group.findOne({groupValue: value});
+        if(_.isEmpty(item)){
+            return "未分组";
+        }
+        return item.groupName;
+    } catch (e) {
+        console.error(e);
+        return e;
+    }
+};
+
+const _filterChannelAndNickname = async(list, items) => {
+    try {
+        let result = [];
+        for(const _channel of list){
+            const map1 = new Map();
+            for(const item of items){
+                const {channel, nickname, group} = item;
+                if(channel == _channel){
+                    const _nickname = map1.get(nickname);
+                    if(!_nickname){
+                        map1.set(nickname, group);
+                    }
+                }
+            }
+            const final = [];
+            for(const [key, value] of map1.entries()){
+                const groupName = await _getGroupName(value);
+                final.push({channel: _channel, nickname: key, group: groupName});
+            }
+            result = result.concat(final);
+        }
+        return result;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+
+
 // ============================ 分割线 ===========================//
+
+
+const getStatisticsPlayCount = async(page) => {
+    try {
+        let query = $post.find(page);
+        let countQuery = $post.countDocuments(page);
+        const total = await countQuery.exec();
+        const items = await query.exec();
+        console.info(`items.size: ${items.length}`);
+        let playCountSum = 0;
+        for(const item of items){
+            playCountSum = playCountSum + item.playCount;
+        }
+        return {playCountSum, titleCountSum: total};
+    } catch (e) {
+        console.error(e);
+        return e;
+    }
+};
+
 
 const getAll = async (page) => {
     try {
@@ -142,7 +225,9 @@ const getAll = async (page) => {
         query.skip(page.skip);
         query.sort(page.sort);
         const items = await query.exec();
-
+        for(const item of items){
+            item.groupName = await _getGroupName(item.group);
+        }
         page.items = items;
         return page.getResult();
     } catch (e) {
@@ -191,6 +276,35 @@ const getChannelAndNickname = async() => {
 };
 
 
+const getUsernameByChannel = async(channel) => {
+    try {
+        let query = $post.find({channel: channel});
+        let countQuery = $post.countDocuments();
+        const total = await countQuery.exec();
+        if(total === 0){
+            return {err: null, message: "没有数据"}
+        }
+        let items = await query.exec();
+        const map = new Map();
+        for(const item of items){
+            const {nickname} = item;
+            const value = map.get(nickname);
+            if(!value){
+                map.set(nickname, item.postId);
+            }
+        }
+        const final = [];
+        for(const [key, value] of map.entries()){
+            final.push(key);
+        }
+        return final;
+    } catch (e) {
+        console.error(e);
+        return {err: e, message: "没有数据"};
+    }
+};
+
+
 const exportPost = async(args) => {
     try {
         let posts = await $post.find(args);
@@ -230,7 +344,7 @@ const exportPostForStatistics = async(args) => {
         posts = await statistics(posts);
         console.info('总表导出的数据量: ', posts.length);
         const postTable = [];
-        const header = ['平台','标题数','播放量','收藏数','转发数','评论数','点赞数','推荐数','粉丝数'];
+        const header = ['平台','标题数','播放量','收藏数','转发数','评论数','点赞数','推荐数'];
         postTable.push(header);
         for(const post of posts){
             const row = [];
@@ -242,7 +356,7 @@ const exportPostForStatistics = async(args) => {
             row.push(post.commentCount);
             row.push(post.likeCount);
             row.push(post.recommendCount);
-            row.push(post.fansCount);
+            // row.push(post.fansCount);
             postTable.push(row);
         }
         const fileName = _generateFileName(statisticsPostSheet);
@@ -257,8 +371,47 @@ const exportPostForStatistics = async(args) => {
 };
 
 
+const getGroupList = async(args) => {
+    try {
+        console.info(`args: ${args}`);
+        let channelList = [];
+        let query = $post.find(args);
+        const items = await query.exec();
+        if(!args.group){
+            channelList = await _filterChannel(items);
+        } else {
+            channelList.push(args.channel);
+        }
+        const result = await _filterChannelAndNickname(channelList, items);
+        return result;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+
+const updateGroup = async(arr_args) => {
+    try {
+        for(const item of arr_args){
+            const {channel, nickname, groupValue} = item;
+            const set = {}; set[`group`] = groupValue;
+            await $post.update({channel: channel, nickname: nickname}, {$set: set}, {multi:true});
+        }
+        return {err: null};
+    } catch (e) {
+        console.error(e);
+        return {err: "更改失败"};
+    }
+};
+
+
 exports.getAll = getAll;
 exports.exportPost = exportPost;
+exports.updateGroup = updateGroup;
+exports.getGroupList = getGroupList;
 exports.getStatisticsPost = getStatisticsPost;
+exports.getUsernameByChannel = getUsernameByChannel;
 exports.getChannelAndNickname = getChannelAndNickname;
+exports.getStatisticsPlayCount = getStatisticsPlayCount;
 exports.exportPostForStatistics = exportPostForStatistics;
